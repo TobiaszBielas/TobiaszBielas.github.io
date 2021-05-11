@@ -17,14 +17,14 @@ canvas {
 <body onload="startGame()">
 <script>
 
-var myGamePiece, rightPlatform;
+var bottomPlatform, leftPlatform;
 var myObstacle;
 var myBall, mySecondBall;
 var screen_width = 1000, screen_height = 500;
 
 function startGame() {
-    myGamePiece = new component(150, 20, "red", (screen_width-150)/2, screen_height - 20); //platformę na dole strony grubości 20 px
-    rightPlatform = new component(20, 150, "pink", screen_width-20, (screen_height - 150)/2); 
+    bottomPlatform = new component(150, 20, "red", (screen_width-150)/2, screen_height - 20); //platformę na dole strony grubości 20 px
+    leftPlatform = new component(20, 150, "pink", 0, (screen_height - 150)/2); 
     myBall = new ball(100, 100, 5, 5, "green", 10);
     mySecondBall = new ball(100, 100, 2, 2, "blue", 10);
     //myObstacle  = new component(10, 200, "green", 300, 120);    
@@ -92,98 +92,100 @@ function ball(x, y, speed_x, speed_y, color, size){
         this.y += this.speed_y;        
     }
 
-    this.crashWithBottom = function(myGameArea) {
-        var my_bottom = this.y + this.size;
-        var crash = true;
-        if (my_bottom < screen_height) {
-            crash = false;
+    this.crashWithEdge = function() {
+        var ball_y = this.y + this.size/2;
+        var ball_x = this.x + this.size/2; 
+
+        if (ball_y < 0 + this.size) {
+            this.speed_y *= -1;
         }
-        return crash;
+        
+        if (ball_x > screen_width) {
+            this.speed_x *= -1;
+        }
+
+        if(ball_y > screen_height || ball_x < 0 + this.size) {
+            myGameArea.stop();
+        }
     }
 
-    this.crashWithBounds = function(myGameArea){
-        var myleft = this.x - (this.size / 2);
-        var myright = this.x + (this.size / 2);
-        var mytop = this.y - (this.size / 2);
-        var mybottom = this.y + (this.size / 2);
-        var platformleft = myGameArea.x;
-        var platformright = myGameArea.x + (myGameArea.width);
-        var platformtop = myGameArea.y;
-        var angleChange = 0;
-        if ((mybottom >= platformtop && myleft >= platformleft && myright < platformright) || (mytop <= 0)) {
-            angleChange = 1;
+    this.crashWithBottomPlatform = function(component){
+        var ball_y = this.y + this.size/2;
+        var ball_x = this.x + this.size;
+
+        if (ball_y >= component.y && ball_x >= component.x && ball_x <= component.x + component.width) {
+            this.speed_y *= -1
+
         }
-        if (myleft <= 0) {
-            angleChange = 2;
-        }
-        if (myright >= screen_width) {
-            angleChange = 3;
-        }
-        return angleChange;
     }
+
+    this.crashWithLeftPlatform = function(component){
+        var ball_y = this.y + this.size/2;
+        var ball_x = this.x - this.size;
+
+        if (ball_x < component.x && ball_y >= component.y && ball_y <= component.y + component.height) {
+            this.speed_x *= -1
+
+        }
+    }
+    
+}
+
+function movement(){
+    myGameArea.clear();  
+    if (myGameArea.key && myGameArea.key == 37) 
+        {bottomPlatform.speedX = -8; bottomPlatform.newPos(); bottomPlatform.speedX = 0;}
+    if (myGameArea.key && myGameArea.key == 39) 
+        {bottomPlatform.speedX = 8;  bottomPlatform.newPos(); bottomPlatform.speedX = 0;}
+    bottomPlatform.newPos();    
+    bottomPlatform.update();
+    
+    if (myGameArea.key && myGameArea.key == 38) 
+        {leftPlatform.speedY = -8; leftPlatform.newPos(); leftPlatform.speedY = 0;}
+    if (myGameArea.key && myGameArea.key == 40) 
+        {leftPlatform.speedY = 8;  leftPlatform.newPos(); leftPlatform.speedY = 0;}
+    leftPlatform.newPos();    
+    leftPlatform.update();
 }
 
 function updateGameArea() {
-    myGameArea.clear();  
-    if (myGameArea.key && myGameArea.key == 37) 
-        {myGamePiece.speedX = -8; myGamePiece.newPos(); myGamePiece.speedX = 0;}
-    if (myGameArea.key && myGameArea.key == 39) 
-        {myGamePiece.speedX = 8;  myGamePiece.newPos(); myGamePiece.speedX = 0;}
-    myGamePiece.newPos();    
-    myGamePiece.update();
+    movement();    
+    //myObstacle.update();
     
-    if (myGameArea.key && myGameArea.key == 38) 
-        {rightPlatform.speedY = -8; rightPlatform.newPos(); rightPlatform.speedY = 0;}
-    if (myGameArea.key && myGameArea.key == 40) 
-        {rightPlatform.speedY = 8;  rightPlatform.newPos(); rightPlatform.speedY = 0;}
-    rightPlatform.newPos();    
-    rightPlatform.update();
-        //myObstacle.update();
-    
-    if (myBall.crashWithBottom(myGameArea)) 
-        {myGameArea.stop();}
-    if (myBall.crashWithBounds(myGamePiece) == 1) 
-        {myBall.speed_y *= -1;}
-    if (myBall.crashWithBounds(myGamePiece) == 2)
-        {myBall.speed_x *= -1;}
-    if (myBall.crashWithBounds(myGamePiece) == 3)
-        {myBall.speed_x *= -1;}
+    myBall.crashWithEdge();
+    myBall.crashWithBottomPlatform(bottomPlatform);
+    myBall.crashWithLeftPlatform(leftPlatform);
     myBall.newPos();
     myBall.update();
 
-    if (mySecondBall.crashWithBottom(myGameArea)) 
-        {mySecondBall.speed_y *= -1;}
-    if (mySecondBall.crashWithBounds(rightPlatform) == 1) 
-        {mySecondBall.speed_y *= -1;}
-    if (mySecondBall.crashWithBounds(rightPlatform) == 2)
-        {mySecondBall.speed_x *= -1;}
-    if (mySecondBall.crashWithBounds(rightPlatform) == 3)
-        {myGameArea.stop();}
+    mySecondBall.crashWithEdge();
+    mySecondBall.crashWithBottomPlatform(bottomPlatform);
+    mySecondBall.crashWithLeftPlatform(leftPlatform);
     mySecondBall.newPos();
     mySecondBall.update();
 }
 
 function moveup() {
-    rightPlatform.speedY = -8; 
+    leftPlatform.speedY = -8; 
 }
 
 function movedown() {
-    rightPlatform.speedY = 8; 
+    leftPlatform.speedY = 8; 
 }
 
 function moveleft() {
-    myGamePiece.speedX = -8; 
+    bottomPlatform.speedX = -8; 
 }
 
 function moveright() {
-    myGamePiece.speedX = 8; 
+    bottomPlatform.speedX = 8; 
 }
 
 function clearmove() {
-    myGamePiece.speedX = 0; 
-    myGamePiece.speedY = 0;
-    rightPlatform.speedX = 0; 
-    rightPlatform.speedY = 0; 
+    bottomPlatform.speedX = 0; 
+    bottomPlatform.speedY = 0;
+    leftPlatform.speedX = 0; 
+    leftPlatform.speedY = 0; 
 }
 </script>
 <div style="text-align:center;width:this.canvas.width;">
