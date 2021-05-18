@@ -6,7 +6,7 @@ var blocks = [];
 var points = 0;
 var leftPlatformVisibility = false;
 var pauseGameCheck = 0;
-
+var isPaused = false;
 function rand(min, max) {
     return Math.floor(Math.random() * (max - min) ) + min;
 }
@@ -384,6 +384,13 @@ function movement(){
         leftPlatform.newPos(); 
         leftPlatform.speedY = 0;
     }
+    if (myGameArea.key && myGameArea.key == 83 && isPaused == true) {
+        myBall.speed_x = -2;
+        myBall.speed_y = 2;
+        mySecondBall.speed_x = 2;
+        mySecondBall.speed_y = 2;
+        isPaused = false;
+    }
 }
 
  function score(points){
@@ -393,7 +400,17 @@ function movement(){
  }
 
 function updateGameArea() {
-    {myGameArea.clear();  
+    myGameArea.clear();
+    if(isPaused){
+        myBall.speed_x = 0;
+        myBall.speed_y = 0;
+        mySecondBall.speed_x = 0;
+        mySecondBall.speed_y = 0;
+        myBall.x = bottomPlatform.x + bottomPlatform.width / 3; 
+        myBall.y = bottomPlatform.y;
+        mySecondBall.x = bottomPlatform.x + bottomPlatform.width * 2/3;
+        mySecondBall.y = bottomPlatform.y;
+    }
     movement();
     score(points);
     if(leftPlatformVisibility){
@@ -426,7 +443,7 @@ function updateGameArea() {
     mySecondBall.crashWithPlatform(bottomPlatform);
     mySecondBall.newPos();
     mySecondBall.update();
-}
+
 }
 
 function moveup() {
@@ -468,3 +485,9 @@ function checkLeftPlatform() {
         leftPlatformVisibility = true;
 }
 
+function pauseGame() {
+    if(points >= 10 && pauseGameCheck < 3 && isPaused == false){
+        pauseGameCheck += 1;
+        isPaused = true;
+    }
+}
