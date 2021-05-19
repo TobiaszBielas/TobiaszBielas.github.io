@@ -71,35 +71,31 @@ function component(width, height, color, x=0, y=0, visibility=true) {
     }
 
     this.crashWithPlatform = function(component) {
-        if(this.x < component.x + component.width && this.y <= component.y + component.height && this.height < this.width){
-            this.x = component.width
+        if(this.x <= component.x + component.width && this.y <= component.y + component.height && this.height < this.width){
+            this.x = 20
             this.speedX = 0;
         }
-        if(this.y + this.height > component.y && this.height > this.width && this.x + this.width >= component.x) {
-            this.y = screen_height - component.height - this.height;
+        if(this.y + this.height >= component.y && this.x + this.width >= component.x && this.height > this.width) {
+            this.y = screen_height - 20 - this.height;
             this.speedY = 0;
         }
     }
 
     this.crashWithEdge = function() {
         if (this.x < 0) {
-            this.speedX *= -1;
-            this.x += 20;
+            this.x += 10;
             this.speedX = 0;
         }
         if (this.x + this.width > screen_width) {
-            this.speedX *= -1;
-            this.x -= 20;
+            this.x -= 10;
             this.speedX = 0;
         }
         if (this.y < 0) {
-            this.speedY *= -1;
-            this.y += 20;
+            this.y += 10;
             this.speedY = 0;
         }
         if (this.y + this.height > screen_height) {
-            this.speedY *= -1;
-            this.y -= 20;
+            this.y -= 10;
             this.speedY = 0;
         }   
     }
@@ -208,10 +204,12 @@ function ball(x, y, speed_x, speed_y, color, size){
         if(leftPlatformVisibility){
             if(ball_y_down >= screen_height || ball_x_left <= 0) {
                 myGameArea.stop();
+                alert("GAME OVER\nPoints: " + points);
             }
         }else {
             if(ball_y_down >= screen_height) {
                 myGameArea.stop();
+                alert("GAME OVER\nPoints: " + points);
             }else if (ball_x_left <= 0) {
                 if((ball_y >= 0 && ball_y < screen_height*0.1) || 
                     (ball_y > screen_height*0.9 && ball_y <= screen_height)){
@@ -345,14 +343,15 @@ function ball(x, y, speed_x, speed_y, color, size){
                     component.deleteBlock();
                     this.speed_x *= -1;
                     if((this.speed_y = rand(-2,2)) == 0)
-                        this.speed_y = 0.5;
+                        this.speed_y = 1;
                     return true;
                 }
             }
             else if(ball_y_up <= component.y + component.height){
                 if(ball_x <= component.x + component.width && ball_x >= component.x) {
                     component.deleteBlock();
-                    this.speed_x = rand(-4,4);
+                    if((this.speed_x = rand(-4,4)) == 0)
+                    this.speed_x = 2;
                     this.speed_y *= -1;
                     return true;
                 }
