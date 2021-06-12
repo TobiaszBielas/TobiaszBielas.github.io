@@ -22,6 +22,7 @@ function startGame() {
     leftPlatform = new component(20, rand(80, screen_height/2), "pink", 0, 50); 
     myBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "green", 10);
     mySecondBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "blue", 10);
+  
     //myObstacle  = new component(10, 200, "green", 300, 120);    
     myGameArea.start();
 }
@@ -126,6 +127,17 @@ function ball(x, y, speed_x, speed_y, color, size){
     this.newPos = function() {
         this.x += this.speed_x;
         this.y += this.speed_y;        
+    }
+    this.crashWithBall = function(s_ball) {
+        if((this.x + this.size >= s_ball.x - s_ball.size && this.x - this.size <= s_ball.x + s_ball.size) && (this.y + this.size >= s_ball.y - s_ball.size && this.y - this.size <= s_ball.y + s_ball.size)) {
+            this.speed_x *= -1;
+            this.speed_y *= -1;
+            s_ball.speed_x *= -1;
+        }
+        if((this.y + this.size >= s_ball.y - s_ball.size && this.y - this.size <= s_ball.y + s_ball.size) && (this.x - this.size <= s_ball.x + s_ball.size && this.x + this.size >= s_ball.x - s_ball.size)) {
+            this.speed_x *= -1;
+            s_ball.speed_y *= -1;
+        }
     }
 
     this.crashWithEdge = function() {
@@ -322,36 +334,36 @@ function ball(x, y, speed_x, speed_y, color, size){
     }
 
     this.crashWithBlocks = function(component) {
-        var ball_y_up = this.y  - this.size/2;
-        var ball_y_down = this.y  + this.size/2;
-        var ball_x_left = this.x  - this.size/2;
-        var ball_x_right = this.x  + this.size/2;
+        var ball_y_up = this.y  - this.size;
+        var ball_y_down = this.y  + this.size;
+        var ball_x_left = this.x  - this.size;
+        var ball_x_right = this.x  + this.size;
         var ball_x = this.x;
         var ball_y = this.y;
 
         if(component.visibility == true) {
-            if(ball_y_down == component.y){
+            if(ball_y_down >= component.y && ball_y_up <= component.y){
                 if(ball_x <= component.x + component.width && ball_x >= component.x) {
                     component.deleteBlock();
                     // this.speed_x *= -1;
-                    this.speed_y *= -1;
+                    // this.speed_y *= -1;
                     return true;
                 }
             }
-            else if(ball_x_left == component.x + component.width || ball_x_right == component.x) {
+            else if((ball_x_left <= component.x + component.width && ball_x_right >= component.x + component.width) || (ball_x_right >= component.x && ball_x_left <= component.x)) {
                 if(ball_y <= component.y + component.height && ball_y >= component.y){
                     component.deleteBlock();
                     this.speed_x *= -1;
-                    if((this.speed_y = rand(-2,2)) == 0)
-                        this.speed_y = 1;
+                    // if((this.speed_y = rand(-2,2)) == 0)
+                    //     this.speed_y = 1;
                     return true;
                 }
             }
             else if(ball_y_up <= component.y + component.height){
                 if(ball_x <= component.x + component.width && ball_x >= component.x) {
                     component.deleteBlock();
-                    if((this.speed_x = rand(-4,4)) == 0)
-                    this.speed_x = 2;
+                    // if((this.speed_x = rand(-4,4)) == 0)
+                    //     this.speed_x = 2;
                     this.speed_y *= -1;
                     return true;
                 }
@@ -435,44 +447,25 @@ function updateGameArea() {
     }
     myBall.crashWithEdge();
     myBall.crashWithPlatform(bottomPlatform);
+    // myBall.crashWithBall(mySecondBall);
     myBall.newPos();
     myBall.update();
 
     mySecondBall.crashWithEdge();
     mySecondBall.crashWithPlatform(bottomPlatform);
+    mySecondBall.crashWithBall(myBall);
     mySecondBall.newPos();
     mySecondBall.update();
 
 }
 
-function moveup() {
-    leftPlatform.speedY = -8; 
-}
 
-function movedown() {
-    leftPlatform.speedY = 8; 
-}
-
-function moveleft() {
-    bottomPlatform.speedX = -8; 
-}
-
-function moveright() {
-    bottomPlatform.speedX = 8; 
-}
-
-function clearmove() {
-    bottomPlatform.speedX = 0; 
-    bottomPlatform.speedY = 0;
-    leftPlatform.speedX = 0; 
-    leftPlatform.speedY = 0; 
-}
 function newGame() {
     myGameArea.stop();
     myGameArea.clear();
     points = 0;
     pauseGameCheck = 0;
-    leftPlatformVisibility = leftPlatformVisibility;
+    leftPlatformVisibility = false;
     blocks = [];
     startGame();
 }
