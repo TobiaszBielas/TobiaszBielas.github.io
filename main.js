@@ -1,7 +1,7 @@
 var bottomPlatform, leftPlatform;
 // var myObstacle;
 var myBall, mySecondBall;
-var screen_width = window.screen.width/2, screen_height = window.screen.height/2;
+var screen_width = 640, screen_height = 480;
 var blocks = [];
 var points = 0;
 var leftPlatformVisibility = false;
@@ -115,10 +115,12 @@ function ball(x, y, speed_x, speed_y, color, size){
     this.speed_x = speed_x;
     this.speed_y = speed_y;
     this.size = size;
+    this.image = new Image();
+    this.image.src = "ball.png"
     
     this.update = function() {
         ctx = myGameArea.context;
-        ctx.fillStyle = color;
+        // ctx.drawImage(this.image, this.x-5, this.y-5, 100,100);        
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
