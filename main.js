@@ -7,6 +7,7 @@ var points = 0, second_blocks=0;
 var leftPlatformVisibility = false;
 var pauseGameCheck = 0;
 var isPaused = false;
+var start_time = Date.now();
 function rand(min, max) {
     return Math.floor(Math.random() * (max - min) ) + min;
 }
@@ -43,7 +44,7 @@ function startSecondGame() {
     leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
     myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
     mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
-    myGameArea.start_first();
+    myGameArea.start_second();
 }
 var myGameArea = {
     canvas : document.createElement("canvas"),
@@ -136,7 +137,6 @@ function component(width, height, img_src, x=0, y=0, type=true, visibility=true)
 
     this.deleteBlock = function() {
         if(!this.type)second_blocks+=1;
-        console.log(second_blocks);
         this.visibility = false;
         points += 1;
         blocks_quantity += 1;
@@ -534,9 +534,15 @@ function updateGameAreaFirst() {
     }
 
 }
-
+var time = 0, temporary=0;
 function updateGameAreaSecond() {
     myGameArea.clear();
+    var stop_time = Date.now();
+    time = Math.floor((stop_time-start_time)/1000);
+    if(time % 10 == 0 && time!=0){
+        temporary += 1;
+        console.log(temporary);
+    }        
     if(isPaused){
         myBall.speed_x = 0;
         myBall.speed_y = 0;
@@ -562,15 +568,30 @@ function updateGameAreaSecond() {
     bottomPlatform.newPos();    
     bottomPlatform.update();
     bottomPlatform.crashWithEdge();
-    for(i = 0; i < blocks.length; ++i) {
+    var length = blocks.length;
+    for(i = 0; i < length; ++i) {
         if(blocks[i].visibility){
             blocks[i].update();
         }
-        
+        ////////////////////////////////////////
+        if((time % 20 == 0 || time == 10) && time!=0 && temporary%48 == 0){
+            var img_src = "img/block_1.png"
+            var type = true;
+            blocks[i].y += 20;
+            if(i%2==0) {
+                img_src = "img/block_2.png";
+                type = false;
+            }
+            if(i<10) {
+            console.log("add")
+            blocks.push(new component(50, 20, img_src, 1 + 50 * i + 70, 22+50, type));
+            }
+        }
         myBall.crashWithBlocks(blocks[i]);
         if(second_blocks>=5)
             mySecondBall.crashWithBlocks(blocks[i]);
     }
+    ///////////////////////////////////////////////
     myBall.crashWithEdge();
     myBall.crashWithPlatform(bottomPlatform);
     // myBall.crashWithBall(mySecondBall);
@@ -605,6 +626,7 @@ function newGameFirst() {
 function newGameSecond() {
     myGameArea.stop();
     myGameArea.clear();
+    start_time = Date.now();
     points = 0;
     pauseGameCheck = 0;
     leftPlatformVisibility = false;
