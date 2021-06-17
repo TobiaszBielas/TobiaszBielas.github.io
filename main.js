@@ -25,24 +25,25 @@ function startFirstGame() {
     bottomPlatform = new component(128, 20, "img/platform.png", 50, screen_height - 20); //platformę na dole strony grubości 20 px
     leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
     myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
-    if(second_blocks==4)
     mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
     myGameArea.start_first();
 }
 function startSecondGame() {
     for(i = 0; i < 10; ++i) {
         for(j = 0; j < 3; ++j) {
-            var block_width = 50;
-            blocks.push(new component(block_width - 2, 20, "img/block_1.png", 1 + block_width * i + 20, 22 * j+5));
+            var block_width = 50, type=true, img_src = "img/block_1.png";
+            if((i*j+j)%8 == 0) {
+                type = false;
+                img_src = "img/block_2.png";
+            }
+            blocks.push(new component(block_width, 20, img_src, 1 + block_width * i + 70, 22 * j+50, type));
         }
     }
     bottomPlatform = new component(128, 20, "img/platform.png", 50, screen_height - 20); //platformę na dole strony grubości 20 px
     leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
-    myBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "green", 10);
-    mySecondBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "blue", 10);
-  
-    //myObstacle  = new component(10, 200, "green", 300, 120);    
-    myGameArea.start_second();
+    myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
+    mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
+    myGameArea.start_first();
 }
 var myGameArea = {
     canvas : document.createElement("canvas"),
@@ -561,13 +562,14 @@ function updateGameAreaSecond() {
     bottomPlatform.newPos();    
     bottomPlatform.update();
     bottomPlatform.crashWithEdge();
-    //myObstacle.update();
     for(i = 0; i < blocks.length; ++i) {
         if(blocks[i].visibility){
             blocks[i].update();
         }
+        
         myBall.crashWithBlocks(blocks[i]);
-        mySecondBall.crashWithBlocks(blocks[i]);
+        if(second_blocks>=5)
+            mySecondBall.crashWithBlocks(blocks[i]);
     }
     myBall.crashWithEdge();
     myBall.crashWithPlatform(bottomPlatform);
@@ -575,12 +577,18 @@ function updateGameAreaSecond() {
     myBall.newPos();
     myBall.path();
     myBall.update();
-
-    mySecondBall.crashWithEdge();
-    mySecondBall.crashWithPlatform(bottomPlatform);
-    mySecondBall.crashWithBall(myBall);
-    mySecondBall.newPos();
-    mySecondBall.update();
+    if(second_blocks==4){ 
+        mySecondBall.x = rand(20, screen_width-20);
+        mySecondBall.y = rand(130, screen_height/2);
+    }
+    if(second_blocks>=5){
+        mySecondBall.crashWithEdge();
+        mySecondBall.crashWithPlatform(bottomPlatform);
+        mySecondBall.crashWithBall(myBall);
+        mySecondBall.newPos();
+        mySecondBall.path();
+        mySecondBall.update();
+    }
 
 }
 

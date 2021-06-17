@@ -6,10 +6,10 @@
     <link rel="stylesheet" href="main.css">
 </head>
 
-<body onload="startFirstGame()">
+<body onload="startSecondGame()">
 <script src="main.js"></script>
 <div style="text-align:center;width:this.canvas.width;">    
-    <button class="button button1" onmousedown=myGameArea.stop() onmouseup=myGameArea.start()>Start</button>
+    <button class="button button1" onmousedown=myGameArea.stop() onmouseup="myGameArea.start_second()">Start</button>
     <button class="button button1" onmousedown=newGame()>New Game</button>
     <button class="button button1" onmousedown=myGameArea.stop() ontouchstart=myGameArea.stop()>Stop</button><br><br>
     <button class="button button1" onmousedown="checkLeftPlatform()">on/off Left Platform</button>
