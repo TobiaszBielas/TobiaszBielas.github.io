@@ -1,9 +1,9 @@
 var bottomPlatform, leftPlatform;
-// var myObstacle;
+var blocks_quantity = 0;
 var myBall, mySecondBall;
 var screen_width = 640, screen_height = 480;
 var blocks = [];
-var points = 0;
+var points = 0, second_blocks=0;
 var leftPlatformVisibility = false;
 var pauseGameCheck = 0;
 var isPaused = false;
@@ -11,30 +11,60 @@ function rand(min, max) {
     return Math.floor(Math.random() * (max - min) ) + min;
 }
 
-function startGame() {
+function startFirstGame() {
     for(i = 0; i < 10; ++i) {
         for(j = 0; j < 3; ++j) {
-            var block_width = (screen_width-25)/10;
-            blocks.push(new component(block_width - 2, 20, "gray", 1 + block_width * i + 20, 22 * j+5));
+            var block_width = 50, type=true, img_src = "img/block_1.png";
+            if((i*j+j)%8 == 0) {
+                type = false;
+                img_src = "img/block_2.png";
+            }
+            blocks.push(new component(block_width, 20, img_src, 1 + block_width * i + 70, 22 * j+50, type));
         }
     }
-    bottomPlatform = new component(rand(80, screen_width/2), 20, "red", 50, screen_height - 20); //platformę na dole strony grubości 20 px
-    leftPlatform = new component(20, rand(80, screen_height/2), "pink", 0, 50); 
+    bottomPlatform = new component(128, 20, "img/platform.png", 50, screen_height - 20); //platformę na dole strony grubości 20 px
+    leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
+    myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
+    if(second_blocks==4)
+    mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
+    myGameArea.start_first();
+}
+function startSecondGame() {
+    for(i = 0; i < 10; ++i) {
+        for(j = 0; j < 3; ++j) {
+            var block_width = 50;
+            blocks.push(new component(block_width - 2, 20, "img/block_1.png", 1 + block_width * i + 20, 22 * j+5));
+        }
+    }
+    bottomPlatform = new component(128, 20, "img/platform.png", 50, screen_height - 20); //platformę na dole strony grubości 20 px
+    leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
     myBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "green", 10);
     mySecondBall = new ball(rand(50, screen_width-50), rand(80, screen_height/2), rand(1,3), rand(1,3), "blue", 10);
   
     //myObstacle  = new component(10, 200, "green", 300, 120);    
-    myGameArea.start();
+    myGameArea.start_second();
 }
-
 var myGameArea = {
     canvas : document.createElement("canvas"),
-    start : function() {
+    start_first : function() {
         this.canvas.width = screen_width;
         this.canvas.height = screen_height;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        this.interval = setInterval(updateGameArea, 20);
+        this.interval = setInterval(updateGameAreaFirst, 20);
+        window.addEventListener('keydown', function (e) {
+            myGameArea.key = e.keyCode;
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.key = false;
+        })
+    },
+    start_second : function() {
+        this.canvas.width = screen_width;
+        this.canvas.height = screen_height;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.interval = setInterval(updateGameAreaSecond, 20);
         window.addEventListener('keydown', function (e) {
             myGameArea.key = e.keyCode;
         })
@@ -51,7 +81,7 @@ var myGameArea = {
     }
 }
 
-function component(width, height, color, x=0, y=0, visibility=true) {
+function component(width, height, img_src, x=0, y=0, type=true, visibility=true) {
     this.width = width;
     this.height = height;
     this.speedX = 0;
@@ -59,12 +89,14 @@ function component(width, height, color, x=0, y=0, visibility=true) {
     this.x = x;
     this.y = y;
     this.visibility = visibility;
-    this.color = color;   
+    this.image = new Image();
+    this.image.src = img_src;
+    this.type = type;
 
     this.update = function() {
         ctx = myGameArea.context;
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+
     }
     this.newPos = function() {
         this.x += this.speedX;
@@ -102,27 +134,48 @@ function component(width, height, color, x=0, y=0, visibility=true) {
     }
 
     this.deleteBlock = function() {
+        if(!this.type)second_blocks+=1;
+        console.log(second_blocks);
         this.visibility = false;
-        this.color = "red";
         points += 1;
+        blocks_quantity += 1;
         this.update();
+    }
+    this.showBlock = function() {
+        if(!this.visibility){
+            this.visibility = true;
+            blocks_quantity -= 1;
+            this.update();
+        }
     }
 }
 
-function ball(x, y, speed_x, speed_y, color, size){
+function ball(x, y, speed_x, speed_y, color, size, type=true){
     this.x = x;
     this.y = y;
     this.speed_x = speed_x;
     this.speed_y = speed_y;
     this.size = size;
-    this.image = new Image();
-    this.image.src = "ball.png"
-    
+    this.type = type;
+
+    this.path = function(){
+        ctx = myGameArea.context;
+        ctx.beginPath();
+        ctx.arc(this.x -1*this.speed_x, this.y -1*this.speed_y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x -1.5*this.speed_x, this.y -1.5*this.speed_y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x -2*this.speed_x, this.y -2*this.speed_y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x -2.5*this.speed_x, this.y -2.5*this.speed_y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x -3*this.speed_x, this.y -3*this.speed_y, this.size, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, .4)';
+        ctx.fill();
+    }
     this.update = function() {
         ctx = myGameArea.context;
-        // ctx.drawImage(this.image, this.x-5, this.y-5, 100,100);        
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fillStyle = color;
         ctx.fill();
     }
 
@@ -130,14 +183,18 @@ function ball(x, y, speed_x, speed_y, color, size){
         this.x += this.speed_x;
         this.y += this.speed_y;        
     }
+
     this.crashWithBall = function(s_ball) {
-        if((this.x + this.size >= s_ball.x - s_ball.size && this.x - this.size <= s_ball.x + s_ball.size) && (this.y + this.size >= s_ball.y - s_ball.size && this.y - this.size <= s_ball.y + s_ball.size)) {
+        if((this.x + this.size >= s_ball.x - s_ball.size && this.x - this.size <= s_ball.x + s_ball.size) && (this.y + this.size >= s_ball.y && this.y - this.size <= s_ball.y)) {
             this.speed_x *= -1;
             this.speed_y *= -1;
             s_ball.speed_x *= -1;
+            s_ball.speed_y *= -1;
         }
-        if((this.y + this.size >= s_ball.y - s_ball.size && this.y - this.size <= s_ball.y + s_ball.size) && (this.x - this.size <= s_ball.x + s_ball.size && this.x + this.size >= s_ball.x - s_ball.size)) {
+        if((this.y + this.size >= s_ball.y - s_ball.size && this.y - this.size <= s_ball.y + s_ball.size) && (this.x - this.size <= s_ball.x && this.x + this.size >= s_ball.x)) {
             this.speed_x *= -1;
+            this.speed_y *= -1;
+            s_ball.speed_x *= -1;
             s_ball.speed_y *= -1;
         }
     }
@@ -216,14 +273,18 @@ function ball(x, y, speed_x, speed_y, color, size){
         }
 
         if(leftPlatformVisibility){
-            if(ball_y_down >= screen_height || ball_x_left <= 0) {
-                myGameArea.stop();
-                alert("GAME OVER\nPoints: " + points);
+            if((ball_y_down >= screen_height || ball_x_left <= 0)) {
+                if(this.type){
+                    myGameArea.stop();
+                    alert("GAME OVER\nPoints: " + points);
+                }else second_blocks = 0;
             }
         }else {
             if(ball_y_down >= screen_height) {
-                myGameArea.stop();
-                alert("GAME OVER\nPoints: " + points);
+                if(this.type){
+                    myGameArea.stop();
+                    alert("GAME OVER\nPoints: " + points);
+                }else second_blocks = 0;
             }else if (ball_x_left <= 0) {
                 if((ball_y >= 0 && ball_y < screen_height*0.1) || 
                     (ball_y > screen_height*0.9 && ball_y <= screen_height)){
@@ -348,7 +409,7 @@ function ball(x, y, speed_x, speed_y, color, size){
                 if(ball_x <= component.x + component.width && ball_x >= component.x) {
                     component.deleteBlock();
                     // this.speed_x *= -1;
-                    // this.speed_y *= -1;
+                    this.speed_y *= -1;
                     return true;
                 }
             }
@@ -361,7 +422,7 @@ function ball(x, y, speed_x, speed_y, color, size){
                     return true;
                 }
             }
-            else if(ball_y_up <= component.y + component.height){
+            else if(ball_y_up <= component.y + component.height && ball_y_down >= component.y + component.height){
                 if(ball_x <= component.x + component.width && ball_x >= component.x) {
                     component.deleteBlock();
                     // if((this.speed_x = rand(-4,4)) == 0)
@@ -409,10 +470,71 @@ function movement(){
  function score(points){
     ctx = myGameArea.context;
     ctx.font = "30px Helvetica";
-    ctx.fillText("Score: " + points, screen_width-150, screen_height);           
+    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+    ctx.fillText("Score: " + points, screen_width/2-50, 25);           
  }
+function updateGameAreaFirst() {
+    myGameArea.clear();
+    if(isPaused){
+        myBall.speed_x = 0;
+        myBall.speed_y = 0;
+        mySecondBall.speed_x = 0;
+        mySecondBall.speed_y = 0;
+        myBall.x = bottomPlatform.x + bottomPlatform.width / 3; 
+        myBall.y = bottomPlatform.y;
+        mySecondBall.x = bottomPlatform.x + bottomPlatform.width * 2/3;
+        mySecondBall.y = bottomPlatform.y;
+    }
+    movement();
+    score(points);
+    if(leftPlatformVisibility){
+        bottomPlatform.crashWithPlatform(leftPlatform);
+        leftPlatform.crashWithPlatform(bottomPlatform);
+        leftPlatform.newPos();    
+        leftPlatform.update();
+        leftPlatform.crashWithEdge();
+        myBall.crashWithPlatform(leftPlatform);
+        mySecondBall.crashWithPlatform(leftPlatform);
+    }
 
-function updateGameArea() {
+    bottomPlatform.newPos();    
+    bottomPlatform.update();
+    bottomPlatform.crashWithEdge();
+    for(i = 0; i < blocks.length; ++i) {
+        if(blocks[i].visibility){
+            blocks[i].update();
+        }
+        if(blocks_quantity > 9 && blocks_quantity < 20) {
+            x = Math.floor(Math.random() * 30);
+            blocks[x].showBlock();
+        }
+        
+        myBall.crashWithBlocks(blocks[i]);
+        if(second_blocks>=5)
+            mySecondBall.crashWithBlocks(blocks[i]);
+    }
+    myBall.crashWithEdge();
+    myBall.crashWithPlatform(bottomPlatform);
+    // myBall.crashWithBall(mySecondBall);
+    myBall.newPos();
+    myBall.path();
+    myBall.update();
+    if(second_blocks==4){ 
+        mySecondBall.x = rand(20, screen_width-20);
+        mySecondBall.y = rand(130, screen_height/2);
+    }
+    if(second_blocks>=5){
+        mySecondBall.crashWithEdge();
+        mySecondBall.crashWithPlatform(bottomPlatform);
+        mySecondBall.crashWithBall(myBall);
+        mySecondBall.newPos();
+        mySecondBall.path();
+        mySecondBall.update();
+    }
+
+}
+
+function updateGameAreaSecond() {
     myGameArea.clear();
     if(isPaused){
         myBall.speed_x = 0;
@@ -451,6 +573,7 @@ function updateGameArea() {
     myBall.crashWithPlatform(bottomPlatform);
     // myBall.crashWithBall(mySecondBall);
     myBall.newPos();
+    myBall.path();
     myBall.update();
 
     mySecondBall.crashWithEdge();
@@ -462,16 +585,24 @@ function updateGameArea() {
 }
 
 
-function newGame() {
+function newGameFirst() {
     myGameArea.stop();
     myGameArea.clear();
     points = 0;
     pauseGameCheck = 0;
     leftPlatformVisibility = false;
     blocks = [];
-    startGame();
+    startFirstGame();
 }
-
+function newGameSecond() {
+    myGameArea.stop();
+    myGameArea.clear();
+    points = 0;
+    pauseGameCheck = 0;
+    leftPlatformVisibility = false;
+    blocks = [];
+    startSecondGame();
+}
 function checkLeftPlatform() {
     if(leftPlatformVisibility)
         leftPlatformVisibility = false;

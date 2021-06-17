@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body onload="startFirstGame()">
+<script src="main.js"></script>
+<div style="text-align:center;width:this.canvas.width;">    
+    <button class="button button1" onmousedown=myGameArea.stop() onmouseup="myGameArea.start_first()">Start</button>
+    <button class="button button1" onmousedown=newGameFirst()>New Game</button>
+    <button class="button button1" onmousedown=myGameArea.stop() ontouchstart=myGameArea.stop()>Stop</button><br><br>
+    <button class="button button1" onmousedown="checkLeftPlatform()">on/off Left Platform</button>
+    <button class="button button1" onmousedown="pauseGame()">pause (catch balls)</button>
+</div>
+<!-- <p>Now there is an obstacle in our gaming area, but still nothing happens when the red square hits it.</p> -->
+</body>
+</html>

@@ -1,6 +1,6 @@
 canvas {
     border:1px solid #d3d3d3;
-    background-image: url("canvas.jpg");
+    background-image: url("img/canvas_1.jpg");
     padding-left: 0;
     padding-right: 0;
     margin-left: auto;
@@ -8,7 +8,7 @@ canvas {
     display: block;
 }
 body {
-  background-image: url('background.jpg');
+  background-image: url('img/background.jpg');
 }
 .button {
     background-color: #4CAF50; /* Green */
