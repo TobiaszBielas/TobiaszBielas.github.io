@@ -13,7 +13,9 @@ var points_bonus = 1;
 var bonus_time_start=0, bonus_time_stop, active_bonus = false;
 var left=37, right=39;
 function rand(min, max) {
-    return Math.floor(Math.random() * (max - min) ) + min;
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function startFirstGame() {
