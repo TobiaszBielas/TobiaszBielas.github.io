@@ -8,6 +8,10 @@ var leftPlatformVisibility = false;
 var pauseGameCheck = 0;
 var isPaused = false;
 var start_time = Date.now();
+var bonusObject=[];
+var points_bonus = 1;
+var bonus_time_start=0, bonus_time_stop, active_bonus = false;
+var left=37, right=39;
 function rand(min, max) {
     return Math.floor(Math.random() * (max - min) ) + min;
 }
@@ -134,11 +138,45 @@ function component(width, height, img_src, x=0, y=0, type=true, visibility=true)
             this.speedY = 0;
         }   
     }
-
+    this.bonusCrashWithPlatform = function(platform) {
+        if(this.x >= platform.x && this.x <= platform.x + platform.width)
+            if(this.y + this.height >= platform.y){
+                // bonus_time_start = Date.now();
+                return true;
+            }
+        return false;
+    }
+    this.bonus = function(platform) {
+        var check_bonus = rand(0,5);
+        if(this.type && check_bonus <= 1 && !active_bonus) {
+            platform.width *= 1.2;
+            active_bonus = true;
+            return true;
+        }else if(this.type && check_bonus<=2 && !active_bonus) {
+            platform.width *= 0.8;
+            active_bonus = true;
+            return true;
+        }else if(this.type && check_bonus<=3 && !active_bonus) {
+            points_bonus = 2;
+            active_bonus = true;
+            return true;
+        }else if(this.type && check_bonus<=4 && !active_bonus) {
+            points_bonus = 5;
+            active_bonus = true;
+            return true;
+        }else if(this.type && check_bonus<=5 && !active_bonus) {
+            active_bonus = true;
+            left=39;
+            right=37;
+            return true;
+        }
+        return false;
+    }
+    
     this.deleteBlock = function() {
         if(!this.type)second_blocks+=1;
         this.visibility = false;
-        points += 1;
+        points += 1 * points_bonus;
         blocks_quantity += 1;
         this.update();
     }
@@ -438,12 +476,12 @@ function ball(x, y, speed_x, speed_y, color, size, type=true){
 }
 
 function movement(){
-    if (myGameArea.key && myGameArea.key == 37) {
+    if (myGameArea.key && myGameArea.key == left) {
         bottomPlatform.speedX = -8; 
         bottomPlatform.newPos(); 
         bottomPlatform.speedX = 0;
     }
-    if (myGameArea.key && myGameArea.key == 39) {
+    if (myGameArea.key && myGameArea.key == right) {
         bottomPlatform.speedX = 8;  
         bottomPlatform.newPos(); 
         bottomPlatform.speedX = 0;
@@ -474,6 +512,7 @@ function movement(){
     ctx.fillStyle = 'rgba(255, 255, 255, 1)';
     ctx.fillText("Score: " + points, screen_width/2-50, 25);           
  }
+var bonus_on_screen = 0;
 function updateGameAreaFirst() {
     myGameArea.clear();
     if(isPaused){
@@ -501,18 +540,60 @@ function updateGameAreaFirst() {
     bottomPlatform.newPos();    
     bottomPlatform.update();
     bottomPlatform.crashWithEdge();
+
+    bonus_time_stop = Date.now();
+    bonus_time_stop = (bonus_time_stop-bonus_time_start);
+    console.log(bonus_time_stop);
+    if(bonus_time_stop >= 5000 && bonus_time_stop <= 6000) {
+            console.log(bonus_time_stop);
+        bonus_time_start = 0;
+        bottomPlatform.width = 128;
+        points_bonus = 1;
+        left=37;
+        right=39;
+        active_bonus = false;
+    }
     for(i = 0; i < blocks.length; ++i) {
         if(blocks[i].visibility){
             blocks[i].update();
         }
+
         if(blocks_quantity > 9 && blocks_quantity < 20) {
             x = Math.floor(Math.random() * 30);
             blocks[x].showBlock();
         }
         
-        myBall.crashWithBlocks(blocks[i]);
+        if(myBall.crashWithBlocks(blocks[i]) && blocks[i].type && rand(0,5)<= 1 && !active_bonus && bonus_time_stop > 5) {
+            bonusObject[bonus_on_screen] = new component(20, 20, "img/bonus.png", blocks[i].x, blocks[i].y);
+            bonusObject[bonus_on_screen].speedY = 3;
+            bonus_on_screen += 1;
+        }
+        
         if(second_blocks>=5)
-            mySecondBall.crashWithBlocks(blocks[i]);
+            
+            if(mySecondBall.crashWithBlocks(blocks[i]) && blocks[i].type && 1<= 1 && !active_bonus && bonus_time_stop > 5) {
+                bonusObject[bonus_on_screen] = new component(20, 20, "img/bonus.png", blocks[i].x, blocks[i].y);
+                bonusObject[bonus_on_screen].speedY = 3;
+                bonus_on_screen += 1;
+            }
+    }
+    
+    for(i=0; i<bonus_on_screen; ++i){
+        if(bonusObject[i].visibility){
+            bonusObject[i].newPos();
+            bonusObject[i].update();
+        }
+        
+        if(bonusObject[i].x > screen_height)
+            bonusObject[i].visibility = false;
+        
+        if(bonusObject[i].bonusCrashWithPlatform(bottomPlatform)) {
+            if(bonusObject[i].visibility){
+                bonus_time_start = Date.now();;
+                bonusObject[i].bonus(bottomPlatform)
+                bonusObject[i].visibility = false;
+            }
+        }   
     }
     myBall.crashWithEdge();
     myBall.crashWithPlatform(bottomPlatform);
@@ -541,7 +622,7 @@ function updateGameAreaSecond() {
     time = Math.floor((stop_time-start_time)/1000);
     if(time % 10 == 0 && time!=0){
         temporary += 1;
-        console.log(temporary);
+        // console.log(temporary);
     }        
     if(isPaused){
         myBall.speed_x = 0;
@@ -568,13 +649,25 @@ function updateGameAreaSecond() {
     bottomPlatform.newPos();    
     bottomPlatform.update();
     bottomPlatform.crashWithEdge();
+    bonus_time_stop = Date.now();
+    bonus_time_stop = (bonus_time_stop-bonus_time_start);
+    console.log(bonus_time_stop);
+    if(bonus_time_stop >= 5000 && bonus_time_stop <= 6000) {
+            console.log(bonus_time_stop);
+        bonus_time_start = 0;
+        bottomPlatform.width = 128;
+        points_bonus = 1;
+        left=37;
+        right=39;
+        active_bonus = false;
+    }
     var length = blocks.length;
     for(i = 0; i < length; ++i) {
         if(blocks[i].visibility){
             blocks[i].update();
         }
         ////////////////////////////////////////
-        if((time % 20 == 0 || time == 10) && time!=0 && temporary%48 == 0){
+        if((time % 20 == 0 || time == 10) && time!=0 && temporary%48 == 0 && length<100){
             var img_src = "img/block_1.png"
             var type = true;
             blocks[i].y += 20;
@@ -582,15 +675,26 @@ function updateGameAreaSecond() {
                 img_src = "img/block_2.png";
                 type = false;
             }
-            if(i<10) {
-            console.log("add")
+            if(i<10 && time % 20 == 0) {
+            // console.log("add")
             blocks.push(new component(50, 20, img_src, 1 + 50 * i + 70, 22+50, type));
             }
         }
-        myBall.crashWithBlocks(blocks[i]);
+        if(myBall.crashWithBlocks(blocks[i]) && blocks[i].type && 1<= 1 && !active_bonus && bonus_time_stop > 5) {
+            bonusObject[bonus_on_screen] = new component(20, 20, "img/bonus.png", blocks[i].x, blocks[i].y);
+            bonusObject[bonus_on_screen].speedY = 3;
+            bonus_on_screen += 1;
+        }
+        
         if(second_blocks>=5)
-            mySecondBall.crashWithBlocks(blocks[i]);
+            
+            if(mySecondBall.crashWithBlocks(blocks[i]) && blocks[i].type && rand(0,5)<= 1 && !active_bonus && bonus_time_stop > 5) {
+                bonusObject[bonus_on_screen] = new component(20, 20, "img/bonus.png", blocks[i].x, blocks[i].y);
+                bonusObject[bonus_on_screen].speedY = 3;
+                bonus_on_screen += 1;
+            }
     }
+       
     ///////////////////////////////////////////////
     myBall.crashWithEdge();
     myBall.crashWithPlatform(bottomPlatform);
@@ -610,7 +714,23 @@ function updateGameAreaSecond() {
         mySecondBall.path();
         mySecondBall.update();
     }
-
+    for(i=0; i<bonus_on_screen; ++i){
+        if(bonusObject[i].visibility){
+            bonusObject[i].newPos();
+            bonusObject[i].update();
+        }
+        
+        if(bonusObject[i].x > screen_height)
+            bonusObject[i].visibility = false;
+        
+        if(bonusObject[i].bonusCrashWithPlatform(bottomPlatform)) {
+            if(bonusObject[i].visibility){
+                bonus_time_start = Date.now();;
+                bonusObject[i].bonus(bottomPlatform)
+                bonusObject[i].visibility = false;
+            }
+        }
+    }
 }
 
 
