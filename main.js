@@ -12,6 +12,7 @@ var bonusObject=[];
 var points_bonus = 1;
 var bonus_time_start=0, bonus_time_stop, active_bonus = false;
 var left=37, right=39;
+var quasiAiGame_isStarted = false;
 function rand(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -34,6 +35,24 @@ function startFirstGame() {
     myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
     mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
     myGameArea.start_first();
+}
+function startQuasiGame() {
+    for(i = 0; i < 10; ++i) {
+        for(j = 0; j < 3; ++j) {
+            var block_width = 50, type=true, img_src = "img/block_1.png";
+            if((i*j+j)%8 == 0) {
+                type = false;
+                img_src = "img/block_2.png";
+            }
+            blocks.push(new component(block_width, 20, img_src, 1 + block_width * i + 70, 22 * j+50, type));
+        }
+    }
+    bottomPlatform = new component(128, 20, "img/platform.png", 50, screen_height - 20); //platformę na dole strony grubości 20 px
+    leftPlatform = new component(20, rand(80, screen_height/2), "img/platform_2.png", 0, 50); 
+    myBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "green", 10);
+    mySecondBall = new ball(rand(20, screen_width-20), rand(130, screen_height/2), rand(1,3), rand(1,3), "blue", 10, false);
+    quasiAiGame_isStarted = true;
+    myGameArea.start_quasi_AI();
 }
 function startSecondGame() {
     for(i = 0; i < 10; ++i) {
@@ -79,7 +98,20 @@ var myGameArea = {
         window.addEventListener('keyup', function (e) {
             myGameArea.key = false;
         })
-    }, 
+    },
+    start_quasi_AI : function() {
+        this.canvas.width = screen_width;
+        this.canvas.height = screen_height;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.interval = setInterval(updateGameAreaFirst, 20);
+        window.addEventListener('keydown', function (e) {
+            myGameArea.key = e.keyCode;
+        })
+        window.addEventListener('keyup', function (e) {
+            myGameArea.key = false;
+        })
+    },  
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
@@ -476,7 +508,36 @@ function ball(x, y, speed_x, speed_y, color, size, type=true){
         return false;
     }
 }
-
+function movementQuasi(){
+    if (myBall.x < bottomPlatform.x) {
+        bottomPlatform.speedX = -8; 
+        bottomPlatform.newPos(); 
+        bottomPlatform.speedX = 0;
+    }
+    if (myBall.x > bottomPlatform.x + bottomPlatform.width) {
+        bottomPlatform.speedX = 8;  
+        bottomPlatform.newPos(); 
+        bottomPlatform.speedX = 0;
+    }
+    
+    if (myBall.y < leftPlatform.y) {
+        leftPlatform.speedY = -8; 
+        leftPlatform.newPos(); 
+        leftPlatform.speedY = 0;
+    }
+    if (myBall.y > leftPlatform.y + leftPlatform.height) {
+        leftPlatform.speedY = 8;  
+        leftPlatform.newPos(); 
+        leftPlatform.speedY = 0;
+    }
+    if (myGameArea.key && myGameArea.key == 83 && isPaused == true) {
+        myBall.speed_x = -2;
+        myBall.speed_y = 2;
+        mySecondBall.speed_x = 2;
+        mySecondBall.speed_y = 2;
+        isPaused = false;
+    }
+}
 function movement(){
     if (myGameArea.key && myGameArea.key == left) {
         bottomPlatform.speedX = -8; 
@@ -527,6 +588,8 @@ function updateGameAreaFirst() {
         mySecondBall.x = bottomPlatform.x + bottomPlatform.width * 2/3;
         mySecondBall.y = bottomPlatform.y;
     }
+    if(quasiAiGame_isStarted)
+        movementQuasi();
     movement();
     score(points);
     if(leftPlatformVisibility){
@@ -591,7 +654,7 @@ function updateGameAreaFirst() {
         
         if(bonusObject[i].bonusCrashWithPlatform(bottomPlatform)) {
             if(bonusObject[i].visibility){
-                bonus_time_start = Date.now();;
+                bonus_time_start = Date.now();
                 bonusObject[i].bonus(bottomPlatform)
                 bonusObject[i].visibility = false;
             }
